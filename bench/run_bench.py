@@ -107,13 +107,21 @@ class Range(object):
 
     def server(self, cwd, preferred=None):
         """Start an HTTP server; try the preferred port first, then a random free one."""
+        errs = []
         for attempt in range(3):
             port = free_port(preferred if attempt == 0 else None)
-            p = self.spawn([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"], cwd)
+            log = os.path.join(self.root, "server-%d.log" % port)
+            with open(log, "w") as fh:
+                p = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
+                                     cwd=cwd, env=self.env, stdout=fh, stderr=subprocess.STDOUT,
+                                     start_new_session=True)
+            self.procs.append(p)
             if wait_listen(port, proc=p):
                 return p, port
             p.kill()
-        raise RuntimeError("could not start a test HTTP server")
+            with open(log) as fh:
+                errs.append("port %d rc=%s: %s" % (port, p.poll(), fh.read()[-600:]))
+        raise RuntimeError("could not start a test HTTP server:\n" + "\n".join(errs))
 
     def nm(self, *args, cwd=None):
         p = subprocess.run([sys.executable, CLI] + list(args), cwd=cwd or self.ws, env=self.env,
