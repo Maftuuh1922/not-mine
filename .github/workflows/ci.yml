@@ -21,7 +21,15 @@ jobs:
       - name: Unit and end-to-end tests
         run: python -m unittest discover -s tests -v
       - name: Decoy-range benchmark
-        run: python bench/run_bench.py --json bench/results.json
+        run: python bench/run_bench.py --json bench/results.json --markdown bench/results.md
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            bench/results.json
+            bench/results.md
       - name: CLI smoke
         run: |
           python scripts/notmine.py --version

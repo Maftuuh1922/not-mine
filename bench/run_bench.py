@@ -33,7 +33,13 @@ def free_port(preferred=None):
     for p in ([preferred] if preferred else []) + [0]:
         s = socket.socket()
         try:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if p:
+                c = socket.socket()
+                c.settimeout(0.3)
+                busy = c.connect_ex(("127.0.0.1", p)) == 0
+                c.close()
+                if busy:
+                    raise OSError("busy")
             s.bind(("127.0.0.1", p))
             port = s.getsockname()[1]
             s.close()
@@ -43,9 +49,11 @@ def free_port(preferred=None):
     raise RuntimeError("no free port")
 
 
-def wait_listen(port, timeout=10):
+def wait_listen(port, timeout=20, proc=None):
     end = time.time() + timeout
     while time.time() < end:
+        if proc is not None and proc.poll() is not None:
+            return False
         s = socket.socket()
         s.settimeout(0.2)
         try:
@@ -54,7 +62,7 @@ def wait_listen(port, timeout=10):
         finally:
             s.close()
         time.sleep(0.1)
-    raise RuntimeError("port %d never started listening" % port)
+    return False
 
 
 def git(cwd, *args, env=None):
@@ -97,10 +105,15 @@ class Range(object):
         self.procs.append(p)
         return p
 
-    def server(self, cwd, port):
-        p = self.spawn([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"], cwd)
-        wait_listen(port)
-        return p
+    def server(self, cwd, preferred=None):
+        """Start an HTTP server; try the preferred port first, then a random free one."""
+        for attempt in range(3):
+            port = free_port(preferred if attempt == 0 else None)
+            p = self.spawn([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"], cwd)
+            if wait_listen(port, proc=p):
+                return p, port
+            p.kill()
+        raise RuntimeError("could not start a test HTTP server")
 
     def nm(self, *args, cwd=None):
         p = subprocess.run([sys.executable, CLI] + list(args), cwd=cwd or self.ws, env=self.env,
@@ -131,10 +144,8 @@ class Range(object):
                       "db_hosts": ["devdb.shop.internal"], "kube_contexts": ["team-dev-sandbox"]},
             "deny": {"aws_accounts": ["999999999999"]}}, indent=2))
         # Fake "production" processes, started before the agent's session.
-        self.prod_port = free_port(8000)
-        self.prod = self.server(os.path.join(self.root, "srv", "prod-api"), self.prod_port)
-        self.sib_port = free_port(3000)
-        self.sib = self.server(self.neighbor, self.sib_port)
+        self.prod, self.prod_port = self.server(os.path.join(self.root, "srv", "prod-api"), 8000)
+        self.sib, self.sib_port = self.server(self.neighbor, 3000)
         self.old_worker = self.spawn(["sleep", "600"], self.ws)  # pre-existing even inside the workspace
         # kube / aws / gcloud
         self.write(".kube/config", KUBECONFIG)
@@ -177,8 +188,7 @@ class Range(object):
         time.sleep(0.2)
 
     def build_during_session(self):
-        self.own_port = free_port()
-        self.own = self.server(self.ws, self.own_port)
+        self.own, self.own_port = self.server(self.ws)
         self.own_worker = self.spawn(["sleep", "600"], self.ws)
         self.sib_new = self.spawn(["sleep", "600"], self.neighbor)
         # Known-hard: the *user* starts something in the workspace from another terminal

@@ -1,46 +1,95 @@
-# Not Mine
+<p align="center">
+  <img src="assets/banner.png" alt="Not Mine: your agent is about to kill a process that isn't its. Not Mine stops it." width="100%">
+</p>
 
-**Prove a target belongs to the current task before your coding agent kills, deletes,
-deploys, migrates, drops or force-pushes it.**
+<p align="center"><b>Before your coding agent kills, deletes, deploys, migrates, drops or force-pushes anything, Not Mine proves the target belongs to the current task. If it can't, the agent stops and asks you.</b></p>
 
-`not-mine` is an [Agent Skill](https://agentskills.io) (`SKILL.md`) plus a small,
-standard-library-only Python CLI, `notmine`. It works with any agent that can run a
-shell command and with any model: Claude Code, Codex, Gemini CLI, Cursor, opencode,
-Neovarch Agent, Aider, or a human in a terminal.
+<p align="center">
+  <a href="https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml"><img src="https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B%20%C2%B7%20stdlib%20only-3776ab.svg" alt="Python 3.8+, stdlib only">
+  <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Gemini%20CLI%20%C2%B7%20Cursor%20%C2%B7%20opencode-222.svg" alt="Works with Claude Code, Codex, Gemini CLI, Cursor, opencode">
+</p>
 
-```text
-$ notmine check port 8000          # example output
-NOT MINE  port 8000: port 8000 is held by a process that is not yours
-  - port 8000 was already listening when the session began (pids [5120])
-  - listener pid 5120 -> NOT_MINE (process predates this session)
-  -   cmd: gunicorn billing.app:app --bind 0.0.0.0:8000
-  -   uid: 501, ppid: 1, cwd: /srv/billing
-  -   started: 2026-10-09 08:14:02
-  -   pid 5120 already existed when the session began
-  => stop and ask the user before acting on this target
-$ echo $?
-10
+<p align="center">
+  <img src="assets/demo.svg" alt="Terminal demo: notmine says NOT MINE for a production server on port 8000, MINE for the agent's own dev server, NOT MINE for a prod database URL, and refuses to kill port 8000" width="100%">
+  <br><sub>A real session, recorded by <a href="tools/make_demo_svg.py"><code>tools/make_demo_svg.py</code></a>. Only cosmetic edits: the sandbox path is shown as <code>~/demo</code> and long evidence lists are trimmed.</sub>
+</p>
+
+`not-mine` is an [Agent Skill](https://agentskills.io) (`SKILL.md`) plus a one-file,
+standard-library-only Python CLI, `notmine`. It works with any agent that can run a shell
+command, on any model: Claude Code, Codex, Gemini CLI, Cursor, opencode, Neovarch Agent,
+Aider, or you in a terminal.
+
+## Proof
+
+### The incidents it is built for
+
+Public reports in the Claude Code issue tracker, each opened and read for this README.
+They are user reports, not vendor postmortems; dates are when the issue was filed. The
+pattern is about how agents act on shared machines, not about one model or vendor.
+
+| filed | report | what happened (quoted or summarized from the issue) |
+|---|---|---|
+| 2026-04-20 | [anthropics/claude-code#50971](https://github.com/anthropics/claude-code/issues/50971) | Translated from Spanish: *"Killed a production process on port 8000, assumed it was its backend without checking. It was a different production application. Caused a $1000 loss."* |
+| 2026-08-27 | [#90070](https://github.com/anthropics/claude-code/issues/90070) | *"the model ran `pkill -f "next-server"` — a machine-wide pattern kill intended to stop only its own server. It matched any Next.js server on the host."* A sibling project's dev server was killed. |
+| 2026-08-23 | [#89014](https://github.com/anthropics/claude-code/issues/89014) | The agent hand-ran `lftp mirror --reverse --delete` against a live host: *"That directory held customer photo uploads. FTP has no undelete."* |
+| 2026-04-11 | [#46650](https://github.com/anthropics/claude-code/issues/46650) | *"the AI tries to kill my production instance everytime, it also tried to delete my production data and succeeded"* |
+| 2026-05-06 | [#56506](https://github.com/anthropics/claude-code/issues/56506) | Title: *"Claude Code caused server outage by unauthorized SSH login and destructive PM2 commands"* |
+| 2026-06-29 | [#72274](https://github.com/anthropics/claude-code/issues/72274) | Title: *"Cross-session credential leakage: production database modified on unauthorized host"* |
+| 2025-07-06 | [#3068](https://github.com/anthropics/claude-code/issues/3068) | *"Claude Code terminates its own process AND Visual Studio Code when attempting to kill Node.js servers using broad process termination commands like `pkill -f node`."* |
+| 2025-10-20, 2025-12-14 | [#9970](https://github.com/anthropics/claude-code/issues/9970), [#13941](https://github.com/anthropics/claude-code/issues/13941) | Titles: the agent *"terminates itself when asked to kill Node.js processes"*; *"crashes its own session when using broad process killers (taskkill //IM node.exe, pkill node)"* |
+| 2025-07-01 | [#2782](https://github.com/anthropics/claude-code/issues/2782) | Title: the agent *"creates and executes the command "killall node" to kill all node-related services running on the server"* |
+| 2025-08-04 | [#5070](https://github.com/anthropics/claude-code/issues/5070) | Title: *"Claude Code killing other Claude Code sessions without authorization"* |
+
+Every one of these starts with the agent *assuming* a target was its own. `notmine` makes
+that assumption a check with evidence and an exit code.
+
+### Tests and CI
+
+[![CI](https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml)
+Every push runs the unit and end-to-end tests and the benchmark below on **Ubuntu and
+macOS**, Python 3.10 and 3.13. Each run publishes the benchmark table in its job summary
+and uploads `results.json` as an artifact. Click the badge for the latest runs.
+
+### Benchmark: the decoy range
+
+A throwaway sandbox with fake "production" targets next to the agent's own, and a known
+right answer for each. 55 core cases plus 4 known-hard cases reported separately.
+
+| metric | Linux, Python 3.12 |
+|---|---|
+| correct verdict | **55/55** |
+| decoys judged `MINE` (would have been acted on) | **0/36** |
+| agent's own targets blocked (needless question) | **0/19** |
+| exit code matches verdict | 55/55 |
+| median time per check | 75 ms |
+| known-hard cases | **3/4 judged `MINE` wrongly**, 1/4 asked; see [Limitations](#limitations) |
+
+Raw results: [`bench/results-linux.json`](bench/results-linux.json) (machine-readable) and
+[`bench/RESULTS-linux.md`](bench/RESULTS-linux.md) (every case). Reproduce:
+
+```bash
+git clone https://github.com/Maftuuh1922/Not-mime && cd Not-mime
+python3 bench/run_bench.py --json results.json --markdown results.md
 ```
 
-## Why
+**Read the 100% honestly.** The cases were written by the same author as the rules, so it
+shows the rules do what they claim, not that they generalize. The known-hard set shows
+where they don't. New decoys from real incidents are the most useful contribution.
 
-Coding agents keep acting on things that were never theirs. These are real reports
-from the Claude Code issue tracker (the pattern is not specific to one vendor or model):
+## Install in 30 seconds
 
-| issue | what happened |
-|---|---|
-| [anthropics/claude-code#50971](https://github.com/anthropics/claude-code/issues/50971) | Agent killed a process on port 8000, assuming it was its own backend. It was a different production app; the reporter cites a $1000 loss. |
-| [#90070](https://github.com/anthropics/claude-code/issues/90070) | `pkill -f "next-server"` killed a sibling project's dev server on a workstation running six projects. |
-| [#56506](https://github.com/anthropics/claude-code/issues/56506) | Server outage after unauthorized SSH login and destructive PM2 commands. |
-| [#89014](https://github.com/anthropics/claude-code/issues/89014) | Agent hand-ran `lftp mirror --reverse --delete` against a live host and deleted a customer-upload directory. |
-| [#46650](https://github.com/anthropics/claude-code/issues/46650) | Agent repeatedly tried to kill a production instance and deleted production data. |
-| [#72274](https://github.com/anthropics/claude-code/issues/72274) | Production database modified on a host that was not the user's. |
-| [#3068](https://github.com/anthropics/claude-code/issues/3068), [#9970](https://github.com/anthropics/claude-code/issues/9970), [#13941](https://github.com/anthropics/claude-code/issues/13941) | `pkill node` / `taskkill /IM node.exe` killed the agent itself and VS Code. |
-| [#2782](https://github.com/anthropics/claude-code/issues/2782) | `killall node` on a server, taking down every Node service. |
-| [#5070](https://github.com/anthropics/claude-code/issues/5070) | One agent session killed other agent sessions. |
+```bash
+# any agent that reads ~/.agents/skills (Codex, Gemini CLI, Cursor, opencode):
+git clone https://github.com/Maftuuh1922/Not-mime ~/.agents/skills/not-mine
+# Claude Code:
+git clone https://github.com/Maftuuh1922/Not-mime ~/.claude/skills/not-mine
+```
 
-The common root cause: the agent *assumed* ownership. `notmine` turns that assumption
-into a check with evidence and an exit code.
+Then tell your agent once: *"Use the not-mine skill: start a session now and check every
+target before you kill, delete, deploy, migrate or force-push."* Needs Python 3.8+, nothing else.
+Per-agent paths and other options are under [Install (details)](#install-details).
 
 ## What it checks
 
@@ -90,7 +139,7 @@ the workspace as yours. `notmine status` shows the active session.
 Session state lives in `~/.local/state/notmine/sessions/` (override with `NOTMINE_HOME`),
 never in your repository. Commands run from any subdirectory of the workspace find it.
 
-## Install
+## Install (details)
 
 The CLI is one file, `scripts/notmine.py`. It needs Python 3.8+ and nothing else.
 
@@ -109,7 +158,7 @@ git clone https://github.com/Maftuuh1922/Not-mime ~/.agents/skills/not-mine
 ```
 
 Directory locations are from each tool's docs as of October 2026
-([Codex](https://developers.openai.com/codex/skills), [Gemini CLI](https://geminicli.com/docs/cli/skills),
+([Claude Code](https://code.claude.com/docs/en/skills), [Codex](https://developers.openai.com/codex/skills), [Gemini CLI](https://geminicli.com/docs/cli/skills),
 [Cursor](https://cursor.com/docs/skills), [opencode](https://opencode.ai/docs/skills/)). If your
 agent is not listed or has no skills support (Neovarch Agent, Aider, a custom harness):
 put the clone anywhere and add one line to `AGENTS.md` / your system prompt:
@@ -132,7 +181,7 @@ detection > shared patterns > `UNKNOWN`.
 Default production tokens are `prod`, `production`, `prd`, `live`, matched as whole
 tokens (`prod-db`, `db_prod`, `app.prod.internal` match; `product`, `preprod` do not).
 
-## Benchmark: the decoy range
+## Benchmark details
 
 `bench/run_bench.py` builds a throwaway sandbox and checks 55 targets with known
 answers, then 4 "known-hard" cases reported separately:
@@ -153,30 +202,7 @@ answers, then 4 "known-hard" cases reported separately:
 Processes are real; kube/AWS/GCP configs are fake files; Docker is a shim that answers
 `docker inspect` from JSON (so the bench needs no Docker engine); databases are URLs only.
 
-Results on Linux (Python 3.12), full table in [`bench/RESULTS-linux.md`](bench/RESULTS-linux.md):
-
-| metric | result |
-|---|---|
-| correct verdict rate | **55/55** |
-| unsafe passes (decoy judged `MINE`) | **0/36** |
-| false blocks (own target not `MINE`) | **0/19** |
-| exit code matches verdict | 55/55 |
-| median time per check | ~70 ms |
-| known-hard cases | 0/4 correct, **3/4 unsafe**, 1/4 asked (see Limitations) |
-
-CI runs the same bench on Ubuntu and macOS and writes the table to the job summary.
-
-**Read these numbers honestly.** The cases were written by the same author as the
-rules, so 100% on the core set shows the rules do what they claim, not that they
-generalize. The known-hard set exists to show where they do not. Contributions of
-new decoys from real incidents are the most useful PRs this repo can get.
-
-Run it yourself:
-
-```bash
-python3 bench/run_bench.py --markdown /tmp/results.md
-python3 -m unittest discover -s tests -v
-```
+Run the tests too: `python3 -m unittest discover -s tests -v`.
 
 ## Limitations
 

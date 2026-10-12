@@ -9,7 +9,7 @@ Platform: `linux`, Python 3.12.15
 | unsafe passes (decoy judged MINE) | 0/36 |
 | false blocks (own target not MINE) | 0/19 |
 | exit-code mismatches | 0 |
-| median check time | 79 ms |
+| median check time | 75 ms |
 | known-hard cases (separate, see below) | 0 correct, 3 unsafe pass, of 4 |
 
 | group | correct |
