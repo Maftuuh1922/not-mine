@@ -1,0 +1,15 @@
+{
+  "prod_patterns": ["customer"],
+  "protected_paths": ["uploads", "*.env"],
+  "protected_branches": ["main", "master", "release/*", "production"],
+  "allow": {
+    "db_hosts": ["devdb.internal"],
+    "kube_contexts": ["team-dev-*"],
+    "aws_accounts": ["111111111111"],
+    "gcp_projects": ["myapp-dev-*"]
+  },
+  "deny": {
+    "aws_accounts": ["999999999999"],
+    "db_hosts": ["localhost:15432"]
+  }
+}

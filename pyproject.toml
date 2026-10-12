@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notmine"
+version = "0.1.0"
+description = "Verify a kill/delete/deploy/migrate/force-push target belongs to the current agent task"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+notmine = "notmine:main"
+
+[project.urls]
+Homepage = "https://github.com/Maftuuh1922/Not-mime"
+
+[tool.setuptools]
+package-dir = { "" = "scripts" }
+py-modules = ["notmine"]

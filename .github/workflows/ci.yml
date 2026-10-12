@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit and end-to-end tests
+        run: python -m unittest discover -s tests -v
+      - name: Decoy-range benchmark
+        run: python bench/run_bench.py --json bench/results.json
+      - name: CLI smoke
+        run: |
+          python scripts/notmine.py --version
+          python scripts/notmine.py begin --no-auto-root
+          python scripts/notmine.py check path README.md
+          rc=0; python scripts/notmine.py check path /etc || rc=$?; [ "$rc" -eq 10 ]
+          rc=0; python scripts/notmine.py check db postgres://u@prod-db/app || rc=$?; [ "$rc" -eq 10 ]
+      - name: pip install works
+        run: |
+          python -m pip install .
+          notmine --version
