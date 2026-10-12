@@ -5,7 +5,7 @@
 <p align="center"><b>Before your coding agent kills, deletes, deploys, migrates, drops or force-pushes anything, Not Mine proves the target belongs to the current task. If it can't, the agent stops and asks you.</b></p>
 
 <p align="center">
-  <a href="https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml"><img src="https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/Maftuuh1922/not-mine/actions/workflows/ci.yml"><img src="https://github.com/Maftuuh1922/not-mine/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/python-3.8%2B%20%C2%B7%20stdlib%20only-3776ab.svg" alt="Python 3.8+, stdlib only">
   <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Gemini%20CLI%20%C2%B7%20Cursor%20%C2%B7%20opencode-222.svg" alt="Works with Claude Code, Codex, Gemini CLI, Cursor, opencode">
@@ -47,7 +47,7 @@ that assumption a check with evidence and an exit code.
 
 ### Tests and CI
 
-[![CI](https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Maftuuh1922/Not-mime/actions/workflows/ci.yml)
+[![CI](https://github.com/Maftuuh1922/not-mine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Maftuuh1922/not-mine/actions/workflows/ci.yml)
 Every push runs the unit and end-to-end tests and the benchmark below on **Ubuntu and
 macOS**, Python 3.10 and 3.13. Each run publishes the benchmark table in its job summary
 and uploads `results.json` as an artifact. Click the badge for the latest runs.
@@ -70,7 +70,7 @@ Raw results: [`bench/results-linux.json`](bench/results-linux.json) (machine-rea
 [`bench/RESULTS-linux.md`](bench/RESULTS-linux.md) (every case). Reproduce:
 
 ```bash
-git clone https://github.com/Maftuuh1922/Not-mime && cd Not-mime
+git clone https://github.com/Maftuuh1922/not-mine && cd not-mine
 python3 bench/run_bench.py --json results.json --markdown results.md
 ```
 
@@ -82,9 +82,9 @@ where they don't. New decoys from real incidents are the most useful contributio
 
 ```bash
 # any agent that reads ~/.agents/skills (Codex, Gemini CLI, Cursor, opencode):
-git clone https://github.com/Maftuuh1922/Not-mime ~/.agents/skills/not-mine
+git clone https://github.com/Maftuuh1922/not-mine ~/.agents/skills/not-mine
 # Claude Code:
-git clone https://github.com/Maftuuh1922/Not-mime ~/.claude/skills/not-mine
+git clone https://github.com/Maftuuh1922/not-mine ~/.claude/skills/not-mine
 ```
 
 Then tell your agent once: *"Use the not-mine skill: start a session now and check every
@@ -154,7 +154,7 @@ The CLI is one file, `scripts/notmine.py`. It needs Python 3.8+ and nothing else
 | opencode | `~/.config/opencode/skills/not-mine` (also reads `~/.claude/skills`, `~/.agents/skills`) | `.opencode/skills/not-mine` |
 
 ```bash
-git clone https://github.com/Maftuuh1922/Not-mime ~/.agents/skills/not-mine
+git clone https://github.com/Maftuuh1922/not-mine ~/.agents/skills/not-mine
 ```
 
 Directory locations are from each tool's docs as of October 2026
@@ -167,8 +167,8 @@ put the clone anywhere and add one line to `AGENTS.md` / your system prompt:
 **As a command** (optional, puts `notmine` on your PATH):
 
 ```bash
-pipx install git+https://github.com/Maftuuh1922/Not-mime
-# or: python3 -m pip install --user git+https://github.com/Maftuuh1922/Not-mime
+pipx install git+https://github.com/Maftuuh1922/not-mine
+# or: python3 -m pip install --user git+https://github.com/Maftuuh1922/not-mine
 ```
 
 ## Configuration

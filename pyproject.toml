@@ -15,7 +15,7 @@ dependencies = []
 notmine = "notmine:main"
 
 [project.urls]
-Homepage = "https://github.com/Maftuuh1922/Not-mime"
+Homepage = "https://github.com/Maftuuh1922/not-mine"
 
 [tool.setuptools]
 package-dir = { "" = "scripts" }
