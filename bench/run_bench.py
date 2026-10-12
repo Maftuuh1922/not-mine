@@ -112,7 +112,7 @@ class Range(object):
             port = free_port(preferred if attempt == 0 else None)
             log = os.path.join(self.root, "server-%d.log" % port)
             with open(log, "w") as fh:
-                p = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
+                p = subprocess.Popen([sys.executable, os.path.join(HERE, "fake_server.py"), str(port)],
                                      cwd=cwd, env=self.env, stdout=fh, stderr=subprocess.STDOUT,
                                      start_new_session=True)
             self.procs.append(p)
